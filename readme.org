@@ -5,7 +5,7 @@
   - entry one
   - entry two
 * lesson 2
-** Part 2
+*** Part 2
   - entry one_one
   - entry two_two
 * Links
