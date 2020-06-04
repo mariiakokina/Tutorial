@@ -1,12 +1,1 @@
-#+STARTUP: showall hidestars
-
-* Lesson 1
-** Part 1
-  - entry one
-  - entry two
-* lesson 2
-*** Part 2
-  - entry one_one
-  - entry two_two
-* Links
-  - [[http://maak.life][Maak Life]]
+ Org files
