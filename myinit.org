@@ -1,0 +1,378 @@
+#+STARTIP: overview
+
+* Configurations
+#+BEGIN_SRC emacs-lisp
+
+;; keep the installed packages in .emacs.d
+(setq package-user-dir (expand-file-name "elpa" user-emacs-directory))
+(package-initialize)
+;; update the package metadata if the local cache is missing
+(unless package-archive-contents
+  (package-refresh-contents))
+
+(setq user-full-name "Mariia Kokina"
+      user-mail-address "kokina@chalmers.se")
+
+(defconst mariia-savefile-dir (expand-file-name "savefile" user-emacs-directory))
+
+;; create the savefile dir if it doesn't exist
+(unless (file-exists-p mariia-savefile-dir)
+  (make-directory mariia-savefile-dir))
+
+
+#+END_SRC
+
+* Interface tweaks
+#+BEGIN_SRC emacs-lisp 
+
+(set-face-attribute 'default nil :height 160)
+
+(global-set-key (kbd "<f5>") 'revert-buffer)
+
+
+;; disable the toolbar
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))
+
+;; disable the bell ring
+(setq ring-bell-function 'ignore)
+
+;;and the blinking cursor
+(blink-cursor-mode -1)
+
+;; disable startup screen
+(setq inhibit-startup-screen t)(setq inhibit-startup-message t)
+
+;; nice scrolling
+(setq scroll-margin 0
+      scroll-conservatively 100000
+      scroll-preserve-screen-position 1)
+
+;; mode line settings
+;;(line-number-mode t)
+(column-number-mode t)
+(size-indication-mode t)
+(global-display-line-numbers-mode)
+;;(global-linum-mode 1) ; always show line numbers
+
+
+;; enable y/n answers
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;; more useful frame title, that show either a file or a
+;; buffer name (if the buffer isn't visiting a file)
+(setq frame-title-format
+      '((:eval (if (buffer-file-name)
+                   (abbreviate-file-name (buffer-file-name))
+                 "%b"))))
+
+;; Emacs modes typically provide a standard means to change the
+;; indentation width -- eg. c-basic-offset: use that to adjust your
+;; personal indentation width, while maintaining the style (and
+;; meaning) of any files you load.
+(setq-default indent-tabs-mode nil)   ;; don't use tabs to indent
+(setq-default tab-width 8)            ;; but maintain correct appearance
+
+;; Newline at end of file
+(setq require-final-newline t)
+
+;; Wrap lines at 80 characters
+(setq-default fill-column 80)
+
+;; delete the selection with a keypress
+(delete-selection-mode t)
+
+;; store all backup and autosave files in the tmp dir
+(setq backup-directory-alist
+      `((".*" . ,temporary-file-directory)))
+(setq auto-save-file-name-transforms
+      `((".*" ,temporary-file-directory t)))
+
+;; revert buffers automatically when underlying files are changed externally
+(global-auto-revert-mode t)
+
+(prefer-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+
+;; hippie expand is dabbrev expand on steroids
+(setq hippie-expand-try-functions-list '(try-expand-dabbrev
+                                         try-expand-dabbrev-all-buffers
+                                         try-expand-dabbrev-from-kill
+                                         try-complete-file-name-partially
+                                         try-complete-file-name
+                                         try-expand-all-abbrevs
+                                         try-expand-list
+                                         try-expand-line
+                                         try-complete-lisp-symbol-partially
+                                         try-complete-lisp-symbol))
+
+;; use hippie-expand instead of dabbrev
+(global-set-key (kbd "M-/") #'hippie-expand)
+(global-set-key (kbd "s-/") #'hippie-expand)
+
+;; replace buffer-menu with ibuffer
+(global-set-key (kbd "C-x C-b") #'ibuffer)
+
+;; align code in a pretty way
+(global-set-key (kbd "C-x \\") #'align-regexp)
+
+(define-key 'help-command (kbd "C-i") #'info-display-manual)
+
+;; misc useful keybindings
+(global-set-key (kbd "s-<") #'beginning-of-buffer)
+(global-set-key (kbd "s->") #'end-of-buffer)
+(global-set-key (kbd "s-q") #'fill-paragraph)
+(global-set-key (kbd "s-x") #'execute-extended-command)
+
+;; smart tab behavior - indent or complete
+(setq tab-always-indent 'complete)
+
+;; Send all emacs backups to a specific folder. 
+(setq backup-directory-alist '(("" . "~/.emacs.d/emacs_backups")))
+
+
+#+END_SRC
+
+* User-defined functions
+
+#+BEGIN_SRC emacs-lisp
+
+
+(defun get-paths (filePath)
+  "Return FILEPATH file content."
+  (with-temp-buffer
+    (insert-file-contents filePath)
+    (seq-filter
+     (lambda (p)
+       ;; filter out any paths starting with ";;"
+       (not(string-prefix-p ";;" p)))
+     (split-string (buffer-string)))))
+
+(defun debug-list (list)
+  "Print out LIST elements on a newline."
+  (interactive)
+  (insert (mapconcat 'identity list "\n")))
+
+(defun copy-from-osx ()
+  (shell-command-to-string "pbpaste"))
+
+(defun paste-to-osx (text &optional push)
+  (let ((process-connection-type nil))
+    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
+      (process-send-string proc text)
+      (process-send-eof proc))))
+
+
+(setq shift-select-mode nil)
+
+;;splits window vertically
+(defun toggle-window-split ()
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer))
+         (next-win-buffer (window-buffer (next-window)))
+         (this-win-edges (window-edges (selected-window)))
+         (next-win-edges (window-edges (next-window)))
+         (this-win-2nd (not (and (<= (car this-win-edges)
+                     (car next-win-edges))
+                     (<= (cadr this-win-edges)
+                     (cadr next-win-edges)))))
+         (splitter
+          (if (= (car this-win-edges)
+             (car (window-edges (next-window))))
+          'split-window-horizontally
+        'split-window-vertically)))
+    (delete-other-windows)
+    (let ((first-win (selected-window)))
+      (funcall splitter)
+      (if this-win-2nd (other-window 1))
+      (set-window-buffer (selected-window) this-win-buffer)
+      (set-window-buffer (next-window) next-win-buffer)
+      (select-window first-win)
+      (if this-win-2nd (other-window 1))))))
+
+(global-set-key (kbd "C-x |") 'toggle-window-split)
+
+#+END_SRC
+
+* Packages
+
+#+BEGIN_SRC emacs-lisp
+
+;; Bootstrap `use-package'
+(unless (package-installed-p 'use-package)
+        (package-refresh-contents)
+        (package-install 'use-package))
+
+
+(require 'use-package)
+(setq use-package-verbose t)
+
+
+(use-package try
+        :ensure t)
+
+
+(use-package which-key
+        :ensure t
+        :config
+	(which-key-mode))
+
+
+;; Org-mode stuff
+(use-package org-bullets
+  :ensure t
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+
+;;; third-party packages
+(use-package zenburn-theme
+  :ensure t
+  :config
+  (load-theme 'zenburn t))
+
+
+;;; built-in packages
+(use-package paren
+  :config
+  (show-paren-mode +1))
+
+
+(use-package elec-pair
+  :config
+  (electric-pair-mode +1))
+
+
+;; highlight the current line
+(use-package hl-line
+  :config
+  (global-hl-line-mode +1))
+
+
+(use-package savehist
+  :config
+  (setq savehist-additional-variables
+        ;; search entries
+        '(search-ring regexp-search-ring)
+        ;; save every minute
+        savehist-autosave-interval 60
+        ;; keep the home clean
+        savehist-file (expand-file-name "savehist" mariia-savefile-dir))
+  (savehist-mode +1))
+
+
+(use-package recentf
+  :config
+  (setq recentf-save-file (expand-file-name "recentf" mariia-savefile-dir)
+        recentf-max-saved-items 500
+        recentf-max-menu-items 15
+        ;; disable recentf-cleanup on Emacs start, because it can cause
+        ;; problems with remote files
+        recentf-auto-cleanup 'never)
+  (recentf-mode +1))
+
+(use-package windmove
+  :config
+  ;; use shift + arrow keys to switch between visible buffers
+  (windmove-default-keybindings))
+
+
+
+(use-package dired
+  :config
+  ;; dired - reuse current buffer by pressing 'a'
+  (put 'dired-find-alternate-file 'disabled nil)
+
+  ;; always delete and copy recursively
+  (setq dired-recursive-deletes 'always)
+  (setq dired-recursive-copies 'always)
+
+  ;; if there is a dired buffer displayed in the next window, use its
+  ;; current subdir, instead of the current subdir of this dired buffer
+  (setq dired-dwim-target t)
+
+  ;; enable some really cool extensions like C-x C-j(dired-jump)
+  (require 'dired-x))
+
+(use-package csv-mode
+  :mode "\\.csv\\'"
+  :hook ((csv-mode . (lambda () (visual-line-mode -1)))
+         (csv-mode . (lambda () (auto-fill-mode -1)))
+         (csv-mode . (lambda () (toggle-truncate-lines 1)))))
+  
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (org-plus-contrib whitespace-cleanup-mode csv-mode zenburn-theme which-key use-package try org-bullets))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+
+(use-package snakemake-mode  :magic ("%.snakemake" . snakemake-mode))
+
+;;avoid mistypos
+(setq indo-enable-fles-matching t)
+(setq ido-everywhere t)
+(ido-mode 1)
+
+;; better navigation in buffers
+(defalias 'list-buffers' 'ibuffer-other-window)
+
+;; undo changing window alignment with C-c left/right arrow
+(winner-mode 1)
+
+;;numerate windows for C-x-o
+(use-package ace-window
+  :ensure t
+  :init
+  (progn
+    (global-set-key [remap other-window] 'ace-window)
+    ))
+
+;;better search
+(use-package swiper
+  :ensure t
+  :bind (("\C-s" . swiper)
+         ("C-r" . swiper)
+         ( "C-c C-r" . ivy-resume)
+         ("M-x" . counsel-M-x)
+         ("C-x C-f" . counsel-find-file))
+  :config
+  (progn
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-display-style 'fancy)
+    (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+    (setq enable-recursive-minibuffers t)
+    ))
+
+;;search for a character in a text by passing its alphabetic mark (!searches on the screen)
+(use-package avy
+  :ensure t
+  :bind ("M-s" . avy-goto-char))
+
+;;autocomplete
+(use-package auto-complete
+  :ensure t
+  :init
+  (progn
+    (ac-config-default)
+    (global-auto-complete-mode t)
+  ))
+
+;;ssh
+(use-package counsel-tramp
+  :commands counsel-tramp)
+
+#+END_SRC
