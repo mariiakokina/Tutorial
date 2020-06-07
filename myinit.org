@@ -19,16 +19,23 @@
 (unless (file-exists-p mariia-savefile-dir)
   (make-directory mariia-savefile-dir))
 
+(setq python-shell-interpreter "/usr/local/bin/python")
+(setq python-shell-completion-native-enable nil)
+
 
 #+END_SRC
 
 * Interface tweaks
 #+BEGIN_SRC emacs-lisp 
 
-(set-face-attribute 'default nil :height 160)
+(split-window-right)
+
+(set-face-attribute 'default nil :height 200)
 
 (global-set-key (kbd "<f5>") 'revert-buffer)
 
+(global-auto-revert-mode 1)
+(setq auto-revert-verbose nil)
 
 ;; disable the toolbar
 (when (fboundp 'tool-bar-mode)
@@ -135,10 +142,9 @@
 
 #+END_SRC
 
-* User-defined functions
+* User-defined functions and keys
 
 #+BEGIN_SRC emacs-lisp
-
 
 (defun get-paths (filePath)
   "Return FILEPATH file content."
@@ -201,24 +207,293 @@
 
 #+BEGIN_SRC emacs-lisp
 
-;; Bootstrap `use-package'
-(unless (package-installed-p 'use-package)
-        (package-refresh-contents)
-        (package-install 'use-package))
+  ;; Bootstrap `use-package'
+  (unless (package-installed-p 'use-package)
+          (package-refresh-contents)
+          (package-install 'use-package))
 
 
-(require 'use-package)
-(setq use-package-verbose t)
+  (require 'use-package)
+  (setq use-package-verbose t)
 
 
-(use-package try
-        :ensure t)
+  (use-package try
+          :ensure t)
 
 
-(use-package which-key
-        :ensure t
-        :config
-	(which-key-mode))
+  (use-package which-key
+          :ensure t
+          :config
+          (which-key-mode))
+
+
+  ;;; built-in packages
+  (use-package paren
+    :config
+    (show-paren-mode +1))
+
+
+  (use-package elec-pair
+    :config
+    (electric-pair-mode -1))
+
+
+  ;; highlight the current line
+  (use-package hl-line
+    :config
+    (global-hl-line-mode +1))
+
+
+  (use-package savehist
+    :config
+    (setq savehist-additional-variables
+          ;; search entries
+          '(search-ring regexp-search-ring)
+          ;; save every minute
+          savehist-autosave-interval 60
+          ;; keep the home clean
+          savehist-file (expand-file-name "savehist" mariia-savefile-dir))
+    (savehist-mode +1))
+
+
+  (use-package recentf
+    :config
+    (setq recentf-save-file (expand-file-name "recentf" mariia-savefile-dir)
+          recentf-max-saved-items 500
+          recentf-max-menu-items 15
+          ;; disable recentf-cleanup on Emacs start, because it can cause
+          ;; problems with remote files
+          recentf-auto-cleanup 'never)
+    (recentf-mode +1))
+
+
+  (use-package dired
+    :config
+    ;; dired - reuse current buffer by pressing 'a'
+    (put 'dired-find-alternate-file 'disabled nil)
+
+    ;; always delete and copy recursively
+    (setq dired-recursive-deletes 'always)
+    (setq dired-recursive-copies 'always)
+
+    ;; if there is a dired buffer displayed in the next window, use its
+    ;; current subdir, instead of the current subdir of this dired buffer
+    (setq dired-dwim-target t)
+
+    ;; enable some really cool extensions like C-x C-j(dired-jump)
+    (require 'dired-x))
+
+  (use-package csv-mode
+    :mode "\\.csv\\'"
+    :hook ((csv-mode . (lambda () (visual-line-mode -1)))
+           (csv-mode . (lambda () (auto-fill-mode -1)))
+           (csv-mode . (lambda () (toggle-truncate-lines 1)))))
+  
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(package-selected-packages
+     (quote
+      (org-plus-contrib whitespace-cleanup-mode csv-mode zenburn-theme which-key use-package try org-bullets))))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   )
+
+
+  (use-package snakemake-mode  :magic ("%.snakemake" . snakemake-mode))
+
+  ;;avoid mistypos
+  (setq indo-enable-fles-matching t)
+  (setq ido-everywhere t)
+  (ido-mode 1)
+
+  ;; better navigation in buffers
+  (defalias 'list-buffers' 'ibuffer-other-window)
+
+  ;; undo changing window alignment with C-c left/right arrow
+  (winner-mode 1)
+
+  ;;numerate windows for C-x-o
+  (use-package ace-window
+    :ensure t
+    :init
+    (progn
+      (global-set-key [remap other-window] 'ace-window)
+      ))
+
+  ;;better search
+  (use-package swiper
+    :ensure t
+    :bind (("\C-s" . swiper)
+           ("C-r" . swiper)
+           ( "C-c C-r" . ivy-resume)
+           ("M-x" . counsel-M-x)
+           ("C-x C-f" . counsel-find-file))
+    :config
+    (progn
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-display-style 'fancy)
+      (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+      (setq enable-recursive-minibuffers t)
+      ))
+
+  ;;search for a character in a text by passing its alphabetic mark (!searches on the screen)
+  (use-package avy
+    :ensure t
+    :bind ("M-s" . avy-goto-char))
+
+  ;;autocomplete
+  (use-package auto-complete
+    :ensure t
+    :init
+    (progn
+      (ac-config-default)
+      (global-auto-complete-mode t)
+    ))
+
+  ;;ssh
+  (use-package counsel-tramp
+    :commands counsel-tramp)
+
+  (use-package undo-tree
+    :ensure t
+    :init
+    (global-undo-tree-mode))
+
+(setq langtool-language-tool-jar "/Users/mariiakokina/.emacs.d/elpa/LanguageTool-4.9.1/languagetool-commandline.jar")
+(require 'langtool)
+
+(setq langtool-default-language "en-US")
+
+(global-set-key "\C-x4w" 'langtool-check)
+(global-set-key "\C-x4W" 'langtool-check-done)
+(global-set-key "\C-x4l" 'langtool-switch-default-language)
+(global-set-key "\C-x44" 'langtool-show-message-at-point)
+(global-set-key "\C-x4c" 'langtool-correct-buffer)
+
+(setq langtool-java-bin "/usr/bin/java")
+
+
+
+
+
+
+(autoload 'ispell-get-word "ispell")
+
+(defun lookup-word (word)
+  (interactive (list (save-excursion (car (ispell-get-word nil)))))
+  (browse-url (format "http://en.wiktionary.org/wiki/%s" word)))
+
+(global-set-key (kbd "M-m") 'lookup-word)
+
+
+
+
+#+END_SRC
+* Org-mode
+#+BEGIN_SRC emacs-lisp
+
+
+(global-set-key (kbd "C-c c") 'org-capture)
+
+(setq org-capture-templates
+'(("a" "Appointment" entry (file  "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/gcal.org" "Appointments")
+"* TODO %?\n:PROPERTIES:\n\n:END:\nDEADLINE: %^T \n %i\n")
+("n" "Note" entry (file+headline "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/notes.org" "Notes")
+"* Note %?\n%T")
+("l" "Link" entry (file+headline "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/links.org" "Links")
+"* %? %^L %^g \n%T" :prepend t)
+("b" "Blog idea" entry (file+headline "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/i.org" "Blog Topics:")
+"* %?\n%T" :prepend t)
+("t" "To Do Item" entry (file+headline "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/i.org" "To Do Items")
+"* %?\n%T" :prepend t)
+("j" "Journal" entry (file+datetree "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/journal.org")
+"* %?\nEntered on %U\n  %i\n  %a")
+("s" "Screencast" entry (file "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/screencastnotes.org")
+"* %?\n%i\n")))
+
+
+
+;;get back easy templates
+(require 'org-tempo)
+
+
+;;Add more Languages to bable
+(eval-after-load 'org
+      (lambda()
+        (require 'ess-site)
+        (require 'ob-R)
+        (require 'ob-emacs-lisp)
+        (require 'ob-latex)
+        (require 'octave)
+        (require 'ob-python)
+        (require 'ob-sql)
+        (require 'ob-shell)
+        (require 'ob-sqlite)
+        (require 'ob-julia)
+        (require 'ob-perl)
+        (require 'ob-org)
+        (require 'ob-awk)
+        (require 'ob-sed)
+        (require 'ob-css)
+        (require 'ob-js)
+        (require 'ob-stata)
+        (setq org-export-babel-evaluate nil)
+        (setq org-startup-indented t)
+        ;; increase imenu depth to include third level headings
+        (setq org-imenu-depth 3)
+        ;; Set sensible mode for editing dot files
+        (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
+        ;; Update images from babel code blocks automatically
+        (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
+        (setq org-src-fontify-natively t)
+        (setq org-src-tab-acts-natively t)
+        (setq org-confirm-babel-evaluate nil)))
+
+
+(use-package org
+ :mode (("\\.org$" . org-mode))
+ :ensure org-plus-contrib
+ :config
+ (progn
+  ;; config stuff
+  )) 
+
+(use-package org-agenda
+  :bind (
+         :map org-agenda-mode-map
+         ("k"         . org-agenda-kill))
+  :config
+  (progn
+    ;; Those are my `beginning-of-buffer' and `end-of-buffer':
+    (unbind-key "<S-left>" org-agenda-mode-map)
+    (unbind-key "<S-right>" org-agenda-mode-map)
+
+    (defun my/org-agenda-to-appt ()
+      (interactive)
+      (let ((org-agenda-files (list org-default-calendar-file)))
+        (org-agenda-to-appt t)))))
+
+
+
+(use-package ox
+  :config
+  (progn
+    (defun my/org-export-new-reference (references)
+      "Override of `org-export-new-reference' so identifiers are stable.
+This is useful when generating presentations with ox-reveal
+because slides don't change their ID all the time."
+      (length references))
+
+    (advice-add #'org-export-new-reference
+                :override
+                #'my/org-export-new-reference)))
 
 
 ;; Org-mode stuff
@@ -228,151 +503,274 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 
-;;; third-party packages
+(with-eval-after-load 'org
+   (org-babel-do-load-languages
+    'org-babel-load-languages
+    '(
+      (python . t)
+      (R . t)
+      )
+    )
+   )
+
+
+;; send current line, with prefix print result
+(defun python--send-line (arg)
+  (interactive "P")
+  (if (not arg)
+      (python-shell-send-region (line-beginning-position) (line-end-position))
+    (save-excursion
+      (beginning-of-line)
+      (if (looking-at-p "\\s-*print")
+          (python-shell-send-region (line-beginning-position)
+                                    (line-end-position))
+        (python-shell-send-string
+         (concat "print(" (buffer-substring (line-beginning-position)
+                                            (line-end-position))
+                 ")")))))
+  (display-buffer (process-buffer (python-shell-get-process))))
+
+#+END_SRC
+
+* Reveal.js
+
+#+BEGIN_SRC emacs-lisp
+
+(use-package ox-reveal
+:ensure ox-reveal)
+
+;;(use-package htmlize
+;;:ensure t)
+
+(setq org-reveal-root "file:///Users/mariiakokina/.emacs.d/elpa/reveal.js")
+(setq org-enable-reveal-js-support t)
+(setq org-reveal-title-slide 'auto)
+(setq org-reveal-mathjax t)
+(setq org-reveal-theme "moon")
+(setq org-reveal-plugins '(classList markdown highlight zoom notes))
+
+
+#+END_SRC
+
+
+* Themes
+#+begin_src emacs-lisp
+
 (use-package zenburn-theme
   :ensure t
   :config
   (load-theme 'zenburn t))
 
 
-;;; built-in packages
-(use-package paren
-  :config
-  (show-paren-mode +1))
-
-
-(use-package elec-pair
-  :config
-  (electric-pair-mode +1))
-
-
-;; highlight the current line
-(use-package hl-line
-  :config
-  (global-hl-line-mode +1))
-
-
-(use-package savehist
-  :config
-  (setq savehist-additional-variables
-        ;; search entries
-        '(search-ring regexp-search-ring)
-        ;; save every minute
-        savehist-autosave-interval 60
-        ;; keep the home clean
-        savehist-file (expand-file-name "savehist" mariia-savefile-dir))
-  (savehist-mode +1))
-
-
-(use-package recentf
-  :config
-  (setq recentf-save-file (expand-file-name "recentf" mariia-savefile-dir)
-        recentf-max-saved-items 500
-        recentf-max-menu-items 15
-        ;; disable recentf-cleanup on Emacs start, because it can cause
-        ;; problems with remote files
-        recentf-auto-cleanup 'never)
-  (recentf-mode +1))
-
-(use-package windmove
-  :config
-  ;; use shift + arrow keys to switch between visible buffers
-  (windmove-default-keybindings))
+#+end_src
+* Flycheck
+#+begin_src emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :init
+    (global-flycheck-mode t))
+#+end_src
+* Python
+#+begin_src emacs-lisp
 
 
 
-(use-package dired
-  :config
-  ;; dired - reuse current buffer by pressing 'a'
-  (put 'dired-find-alternate-file 'disabled nil)
 
-  ;; always delete and copy recursively
-  (setq dired-recursive-deletes 'always)
-  (setq dired-recursive-copies 'always)
-
-  ;; if there is a dired buffer displayed in the next window, use its
-  ;; current subdir, instead of the current subdir of this dired buffer
-  (setq dired-dwim-target t)
-
-  ;; enable some really cool extensions like C-x C-j(dired-jump)
-  (require 'dired-x))
-
-(use-package csv-mode
-  :mode "\\.csv\\'"
-  :hook ((csv-mode . (lambda () (visual-line-mode -1)))
-         (csv-mode . (lambda () (auto-fill-mode -1)))
-         (csv-mode . (lambda () (toggle-truncate-lines 1)))))
-  
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   (quote
-    (org-plus-contrib whitespace-cleanup-mode csv-mode zenburn-theme which-key use-package try org-bullets))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-
-(use-package snakemake-mode  :magic ("%.snakemake" . snakemake-mode))
-
-;;avoid mistypos
-(setq indo-enable-fles-matching t)
-(setq ido-everywhere t)
-(ido-mode 1)
-
-;; better navigation in buffers
-(defalias 'list-buffers' 'ibuffer-other-window)
-
-;; undo changing window alignment with C-c left/right arrow
-(winner-mode 1)
-
-;;numerate windows for C-x-o
-(use-package ace-window
-  :ensure t
+(use-package elpy
+  :defer
   :init
-  (progn
-    (global-set-key [remap other-window] 'ace-window)
-    ))
-
-;;better search
-(use-package swiper
-  :ensure t
-  :bind (("\C-s" . swiper)
-         ("C-r" . swiper)
-         ( "C-c C-r" . ivy-resume)
-         ("M-x" . counsel-M-x)
-         ("C-x C-f" . counsel-find-file))
+  (defun enable-elpy-once ()
+    (elpy-enable)
+    (advice-remove 'python-mode 'enable-elpy-once))
+  (advice-add 'python-mode :before 'enable-elpy-once)
   :config
-  (progn
-    (ivy-mode 1)
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-display-style 'fancy)
-    (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
-    (setq enable-recursive-minibuffers t)
-    ))
+  (setq python-shell-interpreter "jupyter"
+	python-shell-interpreter-args "console --simple-prompt"
+	python-shell-prompt-detect-failure-warning nil
+	elpy-rpc-python-command "python3"
+	python-check-command "pyflakes"
+	flycheck-python-flake8-executable "flake8")
+  (add-to-list 'python-shell-completion-native-disabled-interpreters "jupyter"))
 
-;;search for a character in a text by passing its alphabetic mark (!searches on the screen)
-(use-package avy
-  :ensure t
-  :bind ("M-s" . avy-goto-char))
 
-;;autocomplete
-(use-package auto-complete
-  :ensure t
+
+
+(use-package jedi
+:ensure t
+:init
+(add-hook 'python-mode-hook 'jedi:setup)
+(add-hook 'python-mode-hook 'jedi:ac-setup))
+
+(use-package python
+  :if (executable-find "python")
+
+  :functions gud-query-cmdline my-prepare-pdb-args
+
   :init
-  (progn
-    (ac-config-default)
-    (global-auto-complete-mode t)
-  ))
+  (custom-set-variables '(gud-pdb-command-name "python -m pdb"))
+  (defun my-prepare-pdb-args (minor-mode &optional init)
+    "Modify MINOR-MODE and INIT args to be passed to `gud-query-cmdline'.
+If MINOR-MODE is not equal to '(pdb) does nothing, otherwise pass
+the pdb mode and the file name of the current buffer."
+    (let ((fname (buffer-file-name (current-buffer)))
+          (mode (car minor-mode)))
+      (if (equal mode 'pdb)
+          (list mode fname)
+        (list mode init))))
+  (advice-add 'gud-query-cmdline :filter-args #'my-prepare-pdb-args)
 
-;;ssh
-(use-package counsel-tramp
-  :commands counsel-tramp)
+  :config
+  (use-package jedi-core
+    :ensure t
 
-#+END_SRC
+    :functions python-environment-bin jedi:-env-server-command my-jedi-install-server-if-needed
+    :defines popwin:special-display-config
+
+    :config
+    (defun my-jedi-install-server-if-needed ()
+      (unless (file-exists-p
+               ;; This is ugly, but it's the only way I've found so far
+               ;; to make file-exists-p deal with nil.
+               (or (python-environment-bin "jediepcserver" jedi:environment-root)
+                   ;; Hopefully a file named like this won't exist.
+                   (number-to-string (abs (random)))))
+        (message "Jedi virtual env not found. Installing it.")
+        (jedi:install-server-block)))
+
+    (setq jedi:setup-function #'(lambda ()
+                                  (progn
+                                    (my-jedi-install-server-if-needed)
+                                    ;; Code yanked from jedi:install-server-block
+                                    ;; I have to do this or for some reason jedi:environment-root will not work.
+                                    (setq-default jedi:server-command (jedi:-env-server-command))))
+
+          jedi:environment-root "jedi"
+          jedi:use-shortcuts t)
+
+    (add-hook 'python-mode-hook #'jedi:setup)
+
+    ;; popwin included in core.cfg
+    ;;(add-to-list 'popwin:special-display-config '"*jedi:doc*")
+
+
+    :bind (:map jedi-mode-map
+                ("C-c ?" . nil)
+                ("M-?" . jedi:show-doc)
+                ("C-c /" . nil)
+                ("M-r" . helm-jedi-related-names)))
+
+  (use-package company-jedi
+    :ensure t
+    :config
+    (add-to-list 'company-backends 'company-jedi))
+
+  ;; client-server for the rope refactoring library.
+  (use-package traad
+    :ensure t
+    :bind (("C-c t o" . traad-open)
+           ("C-c t k" . traad-close)
+           ("C-c t U" . traad-undo)
+           ("C-c t Y" . traad-redo)
+           ("C-c t r" . traad-rename)
+           ("C-c t n" . traad-normalize-arguments)
+           ("C-c t x" . traad-remove-argument)
+           ("C-c t M" . traad-extract-method)
+           ("C-c t V" . traad-extract-variable)
+           ("C-c t f" . traad-findit)
+           ("C-c t c" . traad-display-occurrences)
+           ("C-c t i" . traad-display-implementations)
+           ("C-c t d" . traad-goto-definition)))
+
+  (use-package pyenv-mode
+    :if (getenv "PYENV_VERSION")
+    :ensure t)
+
+  (use-package sphinx-doc
+    :ensure t
+    :bind (:map sphinx-doc-mode-map
+                ("C-c M-d" . nil)
+                ("C-c C-d" . sphinx-doc))
+    :diminish sphinx-doc-mode)
+
+  (use-package virtualenvwrapper
+    :if (getenv "WORKON_HOME")
+    :ensure t
+    :config
+    (progn
+      (venv-initialize-interactive-shells)
+      (venv-initialize-eshell)))
+
+  (setq python-indent-guess-indent-offset nil)
+
+  (add-hook 'python-mode-hook #'flyspell-prog-mode)
+  (add-hook 'python-mode-hook #'yas-minor-mode)
+  (add-hook 'python-mode-hook #'flycheck-mode)
+  (add-hook 'python-mode-hook #'hs-minor-mode)
+  (add-hook 'python-mode-hook #'sphinx-doc-mode)
+
+  :mode ("\\.py\\'" . python-mode)
+
+  :interpreter ("python" . python-mode))
+
+
+(provide 'python.cfg)
+
+
+
+
+#+end_src
+* Yasnippet
+#+begin_src emacs-lisp
+
+  (use-package yasnippet
+    :init
+    (progn
+      (setq yas-snippet-dirs '("~/emacs/mysnippets"))
+      (yas-reload-all)
+      (add-hook 'org-mode-hook
+                '(lambda ()
+                   (yas-minor-mode)))
+      (add-hook 'ess-mode-hook
+                '(lambda ()
+                   (yas-minor-mode)))
+      (use-package r-autoyas)
+      )
+    )  
+
+
+
+#+end_src
+
+
+
+* Misc packages
+#+begin_src emacs-lisp
+
+(use-package beacon
+:ensure t
+:config
+(beacon-mode 1)
+; (setq beacon-color "#666600")
+) 
+
+(use-package hungry-delete
+:ensure t
+:config
+(global-hungry-delete-mode))
+
+(use-package expand-region
+:ensure t
+:config
+(global-set-key (kbd "C-=") 'er/expand-region))
+
+;;has feature simillar to find and replace in all occurrences
+(use-package iedit
+:ensure t)
+
+(use-package counsel
+:bind
+(("M-y" . counsel-yank-pop)
+:map ivy-minibuffer-map
+("M-y" . ivy-next-time))) 
+
+#+end_src
