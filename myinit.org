@@ -28,116 +28,124 @@
 * Interface tweaks
 #+BEGIN_SRC emacs-lisp 
 
-(split-window-right)
+(add-hook 'org-mode-hook 'soft-wrap-lines)
+(defun soft-wrap-lines ()
+  "Make lines wrap at window edge and on word boundary,
+in current buffer."
+  (interactive)
+  (setq truncate-lines nil)
+  (setq word-wrap t))
+  
+  (split-window-right)
 
-(set-face-attribute 'default nil :height 200)
+  (set-default-font "Monaco 16")
 
-(global-set-key (kbd "<f5>") 'revert-buffer)
+  (global-set-key (kbd "<f5>") 'revert-buffer)
 
-(global-auto-revert-mode 1)
-(setq auto-revert-verbose nil)
+  (global-auto-revert-mode 1)
+  (setq auto-revert-verbose nil)
 
-;; disable the toolbar
-(when (fboundp 'tool-bar-mode)
-  (tool-bar-mode -1))
+  ;; disable the toolbar
+  (when (fboundp 'tool-bar-mode)
+    (tool-bar-mode -1))
 
-;; disable the bell ring
-(setq ring-bell-function 'ignore)
+  ;; disable the bell ring
+  (setq ring-bell-function 'ignore)
 
-;;and the blinking cursor
-(blink-cursor-mode -1)
+  ;;and the blinking cursor
+  (blink-cursor-mode -1)
 
-;; disable startup screen
-(setq inhibit-startup-screen t)(setq inhibit-startup-message t)
+  ;; disable startup screen
+  (setq inhibit-startup-screen t)(setq inhibit-startup-message t)
 
-;; nice scrolling
-(setq scroll-margin 0
-      scroll-conservatively 100000
-      scroll-preserve-screen-position 1)
+  ;; nice scrolling
+  (setq scroll-margin 0
+        scroll-conservatively 100000
+        scroll-preserve-screen-position 1)
 
-;; mode line settings
-;;(line-number-mode t)
-(column-number-mode t)
-(size-indication-mode t)
-(global-display-line-numbers-mode)
-;;(global-linum-mode 1) ; always show line numbers
+  ;; mode line settings
+  ;;(line-number-mode t)
+  (column-number-mode t)
+  (size-indication-mode t)
+  (global-display-line-numbers-mode)
+  ;;(global-linum-mode 1) ; always show line numbers
 
 
-;; enable y/n answers
-(fset 'yes-or-no-p 'y-or-n-p)
+  ;; enable y/n answers
+  (fset 'yes-or-no-p 'y-or-n-p)
 
-;; more useful frame title, that show either a file or a
-;; buffer name (if the buffer isn't visiting a file)
-(setq frame-title-format
-      '((:eval (if (buffer-file-name)
-                   (abbreviate-file-name (buffer-file-name))
-                 "%b"))))
+  ;; more useful frame title, that show either a file or a
+  ;; buffer name (if the buffer isn't visiting a file)
+  (setq frame-title-format
+        '((:eval (if (buffer-file-name)
+                     (abbreviate-file-name (buffer-file-name))
+                   "%b"))))
 
-;; Emacs modes typically provide a standard means to change the
-;; indentation width -- eg. c-basic-offset: use that to adjust your
-;; personal indentation width, while maintaining the style (and
-;; meaning) of any files you load.
-(setq-default indent-tabs-mode nil)   ;; don't use tabs to indent
-(setq-default tab-width 8)            ;; but maintain correct appearance
+  ;; Emacs modes typically provide a standard means to change the
+  ;; indentation width -- eg. c-basic-offset: use that to adjust your
+  ;; personal indentation width, while maintaining the style (and
+  ;; meaning) of any files you load.
+  (setq-default indent-tabs-mode nil)   ;; don't use tabs to indent
+  (setq-default tab-width 8)            ;; but maintain correct appearance
 
-;; Newline at end of file
-(setq require-final-newline t)
+  ;; Newline at end of file
+  (setq require-final-newline t)
 
-;; Wrap lines at 80 characters
-(setq-default fill-column 80)
+  ;; Wrap lines at 80 characters
+  (setq-default fill-column 80)
 
-;; delete the selection with a keypress
-(delete-selection-mode t)
+  ;; delete the selection with a keypress
+  (delete-selection-mode t)
 
-;; store all backup and autosave files in the tmp dir
-(setq backup-directory-alist
-      `((".*" . ,temporary-file-directory)))
-(setq auto-save-file-name-transforms
-      `((".*" ,temporary-file-directory t)))
+  ;; store all backup and autosave files in the tmp dir
+  (setq backup-directory-alist
+        `((".*" . ,temporary-file-directory)))
+  (setq auto-save-file-name-transforms
+        `((".*" ,temporary-file-directory t)))
 
-;; revert buffers automatically when underlying files are changed externally
-(global-auto-revert-mode t)
+  ;; revert buffers automatically when underlying files are changed externally
+  (global-auto-revert-mode t)
 
-(prefer-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
-(set-terminal-coding-system 'utf-8)
-(set-keyboard-coding-system 'utf-8)
+  (prefer-coding-system 'utf-8)
+  (set-default-coding-systems 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
 
-;; hippie expand is dabbrev expand on steroids
-(setq hippie-expand-try-functions-list '(try-expand-dabbrev
-                                         try-expand-dabbrev-all-buffers
-                                         try-expand-dabbrev-from-kill
-                                         try-complete-file-name-partially
-                                         try-complete-file-name
-                                         try-expand-all-abbrevs
-                                         try-expand-list
-                                         try-expand-line
-                                         try-complete-lisp-symbol-partially
-                                         try-complete-lisp-symbol))
+  ;; hippie expand is dabbrev expand on steroids
+  (setq hippie-expand-try-functions-list '(try-expand-dabbrev
+                                           try-expand-dabbrev-all-buffers
+                                           try-expand-dabbrev-from-kill
+                                           try-complete-file-name-partially
+                                           try-complete-file-name
+                                           try-expand-all-abbrevs
+                                           try-expand-list
+                                           try-expand-line
+                                           try-complete-lisp-symbol-partially
+                                           try-complete-lisp-symbol))
 
-;; use hippie-expand instead of dabbrev
-(global-set-key (kbd "M-/") #'hippie-expand)
-(global-set-key (kbd "s-/") #'hippie-expand)
+  ;; use hippie-expand instead of dabbrev
+  (global-set-key (kbd "M-/") #'hippie-expand)
+  (global-set-key (kbd "s-/") #'hippie-expand)
 
-;; replace buffer-menu with ibuffer
-(global-set-key (kbd "C-x C-b") #'ibuffer)
+  ;; replace buffer-menu with ibuffer
+  (global-set-key (kbd "C-x C-b") #'ibuffer)
 
-;; align code in a pretty way
-(global-set-key (kbd "C-x \\") #'align-regexp)
+  ;; align code in a pretty way
+  (global-set-key (kbd "C-x \\") #'align-regexp)
 
-(define-key 'help-command (kbd "C-i") #'info-display-manual)
+  (define-key 'help-command (kbd "C-i") #'info-display-manual)
 
-;; misc useful keybindings
-(global-set-key (kbd "s-<") #'beginning-of-buffer)
-(global-set-key (kbd "s->") #'end-of-buffer)
-(global-set-key (kbd "s-q") #'fill-paragraph)
-(global-set-key (kbd "s-x") #'execute-extended-command)
+  ;; misc useful keybindings
+  (global-set-key (kbd "s-<") #'beginning-of-buffer)
+  (global-set-key (kbd "s->") #'end-of-buffer)
+  (global-set-key (kbd "s-q") #'fill-paragraph)
+  (global-set-key (kbd "s-x") #'execute-extended-command)
 
-;; smart tab behavior - indent or complete
-(setq tab-always-indent 'complete)
+  ;; smart tab behavior - indent or complete
+  (setq tab-always-indent 'complete)
 
-;; Send all emacs backups to a specific folder. 
-(setq backup-directory-alist '(("" . "~/.emacs.d/emacs_backups")))
+  ;; Send all emacs backups to a specific folder. 
+  (setq backup-directory-alist '(("" . "~/.emacs.d/emacs_backups")))
 
 
 #+END_SRC
@@ -145,6 +153,8 @@
 * User-defined functions and keys
 
 #+BEGIN_SRC emacs-lisp
+
+(setq ns-right-command-modifier 'hyper)
 
 (defun get-paths (filePath)
   "Return FILEPATH file content."
@@ -209,8 +219,8 @@
 
   ;; Bootstrap `use-package'
   (unless (package-installed-p 'use-package)
-          (package-refresh-contents)
-          (package-install 'use-package))
+    (package-refresh-contents)
+    (package-install 'use-package))
 
 
   (require 'use-package)
@@ -218,16 +228,16 @@
 
 
   (use-package try
-          :ensure t)
+    :ensure t)
 
 
   (use-package which-key
-          :ensure t
-          :config
-          (which-key-mode))
+    :ensure t
+    :config
+    (which-key-mode))
 
 
-  ;;; built-in packages
+      ;;; built-in packages
   (use-package paren
     :config
     (show-paren-mode +1))
@@ -288,7 +298,7 @@
     :hook ((csv-mode . (lambda () (visual-line-mode -1)))
            (csv-mode . (lambda () (auto-fill-mode -1)))
            (csv-mode . (lambda () (toggle-truncate-lines 1)))))
-  
+
   (custom-set-variables
    ;; custom-set-variables was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
@@ -355,7 +365,7 @@
     (progn
       (ac-config-default)
       (global-auto-complete-mode t)
-    ))
+      ))
 
   ;;ssh
   (use-package counsel-tramp
@@ -366,169 +376,202 @@
     :init
     (global-undo-tree-mode))
 
-(setq langtool-language-tool-jar "/Users/mariiakokina/.emacs.d/elpa/LanguageTool-4.9.1/languagetool-commandline.jar")
-(require 'langtool)
+  (setq langtool-language-tool-jar "/Users/mariiakokina/.emacs.d/elpa/LanguageTool-4.9.1/languagetool-commandline.jar")
+  (require 'langtool)
 
-(setq langtool-default-language "en-US")
+  (setq langtool-default-language "en-US")
 
-(global-set-key "\C-x4w" 'langtool-check)
-(global-set-key "\C-x4W" 'langtool-check-done)
-(global-set-key "\C-x4l" 'langtool-switch-default-language)
-(global-set-key "\C-x44" 'langtool-show-message-at-point)
-(global-set-key "\C-x4c" 'langtool-correct-buffer)
+  (global-set-key "\C-x4w" 'langtool-check)
+  (global-set-key "\C-x4W" 'langtool-check-done)
+  (global-set-key "\C-x4l" 'langtool-switch-default-language)
+  (global-set-key "\C-x44" 'langtool-show-message-at-point)
+  (global-set-key "\C-x4c" 'langtool-correct-buffer)
 
-(setq langtool-java-bin "/usr/bin/java")
-
-
+  (setq langtool-java-bin "/usr/bin/java")
 
 
+  (autoload 'ispell-get-word "ispell")
 
+  (defun lookup-word (word)
+    (interactive (list (save-excursion (car (ispell-get-word nil)))))
+    (browse-url (format "http://en.wiktionary.org/wiki/%s" word)))
 
-(autoload 'ispell-get-word "ispell")
-
-(defun lookup-word (word)
-  (interactive (list (save-excursion (car (ispell-get-word nil)))))
-  (browse-url (format "http://en.wiktionary.org/wiki/%s" word)))
-
-(global-set-key (kbd "M-m") 'lookup-word)
+  (global-set-key (kbd "M-m") 'lookup-word)
 
 
 
+  (use-package request
+    :ensure t)
+
+  (use-package deferred
+    :ensure t)
 
 #+END_SRC
 * Org-mode
 #+BEGIN_SRC emacs-lisp
 
+      (global-set-key (kbd "C-c c") 'org-capture)
 
-(global-set-key (kbd "C-c c") 'org-capture)
+      (setq org-capture-templates
+            '(("t" "Todo" entry (file "/Users/mariiakokina/Library/Mobile Documents/com~apple~CloudDocs/orgfiles/todo.org")
+               "* TODO %?\n%U\n %c" :empty-lines 1))
+            )
 
-(setq org-capture-templates
-'(("a" "Appointment" entry (file  "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/gcal.org" "Appointments")
-"* TODO %?\n:PROPERTIES:\n\n:END:\nDEADLINE: %^T \n %i\n")
-("n" "Note" entry (file+headline "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/notes.org" "Notes")
-"* Note %?\n%T")
-("l" "Link" entry (file+headline "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/links.org" "Links")
-"* %? %^L %^g \n%T" :prepend t)
-("b" "Blog idea" entry (file+headline "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/i.org" "Blog Topics:")
-"* %?\n%T" :prepend t)
-("t" "To Do Item" entry (file+headline "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/i.org" "To Do Items")
-"* %?\n%T" :prepend t)
-("j" "Journal" entry (file+datetree "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/journal.org")
-"* %?\nEntered on %U\n  %i\n  %a")
-("s" "Screencast" entry (file "/Users/mariiakokina/Library/Mobile\ Documents/com~apple~CloudDocs/orgfiles/screencastnotes.org")
-"* %?\n%i\n")))
+      ;;get back easy templates
+      (require 'org-tempo)
 
 
-
-;;get back easy templates
-(require 'org-tempo)
-
-
-;;Add more Languages to bable
-(eval-after-load 'org
-      (lambda()
-        (require 'ess-site)
-        (require 'ob-R)
-        (require 'ob-emacs-lisp)
-        (require 'ob-latex)
-        (require 'octave)
-        (require 'ob-python)
-        (require 'ob-sql)
-        (require 'ob-shell)
-        (require 'ob-sqlite)
-        (require 'ob-julia)
-        (require 'ob-perl)
-        (require 'ob-org)
-        (require 'ob-awk)
-        (require 'ob-sed)
-        (require 'ob-css)
-        (require 'ob-js)
-        (require 'ob-stata)
-        (setq org-export-babel-evaluate nil)
-        (setq org-startup-indented t)
-        ;; increase imenu depth to include third level headings
-        (setq org-imenu-depth 3)
-        ;; Set sensible mode for editing dot files
-        (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
-        ;; Update images from babel code blocks automatically
-        (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
-        (setq org-src-fontify-natively t)
-        (setq org-src-tab-acts-natively t)
-        (setq org-confirm-babel-evaluate nil)))
+      ;;Add more Languages to bable
+      (eval-after-load 'org
+        (lambda()
+          (require 'ess-site)
+          (require 'ob-R)
+          (require 'ob-emacs-lisp)
+          (require 'ob-latex)
+          (require 'octave)
+          (require 'ob-python)
+          (require 'ob-sql)
+          (require 'ob-shell)
+          (require 'ob-sqlite)
+          (require 'ob-julia)
+          (require 'ob-perl)
+          (require 'ob-org)
+          (require 'ob-awk)
+          (require 'ob-sed)
+          (require 'ob-css)
+          (require 'ob-js)
+          (require 'ob-stata)
+          (setq org-export-babel-evaluate nil)
+          (setq org-startup-indented t)
+          ;; increase imenu depth to include third level headings
+          (setq org-imenu-depth 3)
+          ;; Set sensible mode for editing dot files
+          (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
+          ;; Update images from babel code blocks automatically
+          (add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
+          (setq org-src-fontify-natively t)
+          (setq org-src-tab-acts-natively t)
+          (setq org-confirm-babel-evaluate nil)))
 
 
-(use-package org
- :mode (("\\.org$" . org-mode))
- :ensure org-plus-contrib
- :config
- (progn
-  ;; config stuff
-  )) 
+      (use-package org
+        :mode (("\\.org$" . org-mode))
+        :ensure org-plus-contrib
+        :config
+        (progn
+          ;; config stuff
+          )) 
 
-(use-package org-agenda
-  :bind (
-         :map org-agenda-mode-map
-         ("k"         . org-agenda-kill))
-  :config
-  (progn
-    ;; Those are my `beginning-of-buffer' and `end-of-buffer':
-    (unbind-key "<S-left>" org-agenda-mode-map)
-    (unbind-key "<S-right>" org-agenda-mode-map)
+      (use-package org-agenda
+        :bind (
+               :map org-agenda-mode-map
+               ("k"         . org-agenda-kill))
+        :config
+        (progn
+          ;; Those are my `beginning-of-buffer' and `end-of-buffer':
+          (unbind-key "<S-left>" org-agenda-mode-map)
+          (unbind-key "<S-right>" org-agenda-mode-map)
 
-    (defun my/org-agenda-to-appt ()
-      (interactive)
-      (let ((org-agenda-files (list org-default-calendar-file)))
-        (org-agenda-to-appt t)))))
+          (defun my/org-agenda-to-appt ()
+            (interactive)
+            (let ((org-agenda-files (list org-default-calendar-file)))
+              (org-agenda-to-appt t)))))
 
 
 
-(use-package ox
-  :config
-  (progn
-    (defun my/org-export-new-reference (references)
-      "Override of `org-export-new-reference' so identifiers are stable.
-This is useful when generating presentations with ox-reveal
-because slides don't change their ID all the time."
-      (length references))
+      (use-package ox
+        :config
+        (progn
+          (defun my/org-export-new-reference (references)
+            "Override of `org-export-new-reference' so identifiers are stable.
+        This is useful when generating presentations with ox-reveal
+        because slides don't change their ID all the time."
+            (length references))
 
-    (advice-add #'org-export-new-reference
-                :override
-                #'my/org-export-new-reference)))
-
-
-;; Org-mode stuff
-(use-package org-bullets
-  :ensure t
-  :config
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+          (advice-add #'org-export-new-reference
+                      :override
+                      #'my/org-export-new-reference)))
 
 
-(with-eval-after-load 'org
-   (org-babel-do-load-languages
-    'org-babel-load-languages
-    '(
-      (python . t)
-      (R . t)
-      )
-    )
-   )
+      ;; Org-mode stuff
+      (use-package org-bullets
+        :ensure t
+        :config
+        (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 
-;; send current line, with prefix print result
-(defun python--send-line (arg)
-  (interactive "P")
-  (if (not arg)
-      (python-shell-send-region (line-beginning-position) (line-end-position))
-    (save-excursion
-      (beginning-of-line)
-      (if (looking-at-p "\\s-*print")
-          (python-shell-send-region (line-beginning-position)
-                                    (line-end-position))
-        (python-shell-send-string
-         (concat "print(" (buffer-substring (line-beginning-position)
-                                            (line-end-position))
-                 ")")))))
-  (display-buffer (process-buffer (python-shell-get-process))))
+      (with-eval-after-load 'org
+        (org-babel-do-load-languages
+         'org-babel-load-languages
+         '(
+           (python . t)
+           (R . t)
+           )
+         )
+        )
+
+      (use-package interleave
+        :ensure t)
+
+      (use-package helm-bibtex
+        :ensure t)
+
+      (use-package zotxt
+        :ensure t)
+
+      ;; Activate org-zotxt-mode in org-mode buffers
+      (add-hook 'org-mode-hook (lambda () (org-zotxt-mode 1)))
+
+      ;; Change citation format to be less cumbersome in files.
+      ;; You'll need to install mkbehr-short into your style manager first.
+      ;;(eval-after-load "zotxt"
+      ;;'(setq zotxt-default-bibliography-style "mkbehr-short"))
+
+      (use-package ox-pandoc
+        :ensure t)
+
+      (setq org-pandoc-options '((standalone . t)))
+      ;; cancel above settings only for 'docx' format
+      (setq org-pandoc-options-for-docx '((standalone . nil)))
+      ;; special settings for beamer-pdf and latex-pdf exporters
+      (setq org-pandoc-options-for-beamer-pdf '((pdf-engine . "xelatex")))
+      (setq org-pandoc-options-for-latex-pdf '((pdf-engine . "pdflatex")))
+      ;; special extensions for markdown_github output
+      (setq org-pandoc-format-extensions '(markdown_github+pipe_tables+raw_html))
+
+      ;;Once we have done this the citations will be of the form
+      ;; cite:yadayada2019. These can now be picked up by pandoc.
+
+      '((org-mode . (lambda (x) (insert (concat
+                                         "\\cite{"
+                                         (mapconcat 'identity x ",")
+                                         "}")) "")))
+
+      (use-package org-ref
+        :ensure t)
+
+      (setq reftex-default-bibliography '("~/Documents/bibliography/references.bib"))
+
+      ;; see org-ref for use of these variables
+      (setq org-ref-bibliography-notes "~/Documents/bibliography/notes.org"
+            org-ref-default-bibliography '("~/Documents/bibliography/references.bib")
+            org-ref-pdf-directory "~/Documents/bibliography/bibtex-pdfs/")
+
+      (setq bibtex-completion-bibliography
+            "~/Documents/bibliography/references.bib"
+            bibtex-completion-library-path "~/Documents/bibliography/bibtex-pdfs"
+            bibtex-completion-notes-path "~/Documents/bibliography/helm-bibtex-notes")
+
+      ;; open pdf with system pdf viewer (works on mac)
+      (setq bibtex-completion-pdf-open-function
+            (lambda (fpath)
+              (start-process "open" "*open*" "open" fpath)))
+
+      (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
+
+      ;; alternative
+    (setq bibtex-completion-pdf-open-function 'org-open-file)
+
 
 #+END_SRC
 
@@ -715,28 +758,43 @@ the pdb mode and the file name of the current buffer."
 
 (provide 'python.cfg)
 
-
+;; send current line, with prefix print result
+(defun python--send-line (arg)
+  (interactive "P")
+  (if (not arg)
+      (python-shell-send-region (line-beginning-position) (line-end-position))
+    (save-excursion
+      (beginning-of-line)
+      (if (looking-at-p "\\s-*print")
+          (python-shell-send-region (line-beginning-position)
+                                    (line-end-position))
+        (python-shell-send-string
+         (concat "print(" (buffer-substring (line-beginning-position)
+                                            (line-end-position))
+                 ")")))))
+  (display-buffer (process-buffer (python-shell-get-process))))
 
 
 #+end_src
 * Yasnippet
 #+begin_src emacs-lisp
 
-  (use-package yasnippet
-    :init
-    (progn
-      (setq yas-snippet-dirs '("~/emacs/mysnippets"))
-      (yas-reload-all)
-      (add-hook 'org-mode-hook
-                '(lambda ()
-                   (yas-minor-mode)))
-      (add-hook 'ess-mode-hook
-                '(lambda ()
-                   (yas-minor-mode)))
-      (use-package r-autoyas)
-      )
-    )  
-
+(use-package yasnippet
+  :ensure t
+  :config
+  (use-package yasnippet-snippets
+    :ensure t)
+  (yas-global-mode t)
+  (define-key yas-minor-mode-map (kbd "<tab>") nil)
+  (define-key yas-minor-mode-map (kbd "C-'") #'yas-expand)
+  (add-to-list #'yas-snippet-dirs "my-personal-snippets")
+  (yas-reload-all)
+  (setq yas-prompt-functions '(yas-ido-prompt))
+  (defun help/yas-after-exit-snippet-hook-fn ()
+    (prettify-symbols-mode)
+    (prettify-symbols-mode))
+  (add-hook 'yas-after-exit-snippet-hook #'help/yas-after-exit-snippet-hook-fn)
+  :diminish yas-minor-mode)
 
 
 #+end_src
@@ -746,31 +804,35 @@ the pdb mode and the file name of the current buffer."
 * Misc packages
 #+begin_src emacs-lisp
 
-(use-package beacon
-:ensure t
-:config
-(beacon-mode 1)
-; (setq beacon-color "#666600")
-) 
+  (use-package beacon
+  :ensure t
+  :config
+  (beacon-mode 1)
+  ; (setq beacon-color "#666600")
+  ) 
 
-(use-package hungry-delete
-:ensure t
-:config
-(global-hungry-delete-mode))
+  (use-package hungry-delete
+  :ensure t
+  :config
+  (global-hungry-delete-mode))
 
-(use-package expand-region
-:ensure t
-:config
-(global-set-key (kbd "C-=") 'er/expand-region))
+  (use-package expand-region
+  :ensure t
+  :config
+  (global-set-key (kbd "C-=") 'er/expand-region))
 
-;;has feature simillar to find and replace in all occurrences
-(use-package iedit
-:ensure t)
+  ;;has feature simillar to find and replace in all occurrences
+  (use-package iedit
+  :ensure t)
 
-(use-package counsel
-:bind
-(("M-y" . counsel-yank-pop)
-:map ivy-minibuffer-map
-("M-y" . ivy-next-time))) 
+  (use-package counsel
+  :bind
+  (("M-y" . counsel-yank-pop)
+  :map ivy-minibuffer-map
+  ("M-y" . ivy-next-time))) 
+
+
+  (use-package markdown-mode+
+    :ensure t)
 
 #+end_src
